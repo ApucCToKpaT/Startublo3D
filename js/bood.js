@@ -86,7 +86,9 @@ var bood = {
 		document.getElementById('restartBtn').onclick = function(event) {
 			event.preventDefault();
 			bood._player._health = 100;
+			bood._player._ammo = 100;
 			bood._frags = 0;
+			document.getElementById('ammo').innerHTML = bood._player._ammo;
 			document.getElementById('health').innerHTML = bood._player._health;
 			document.getElementById('frags').innerHTML = bood._frags;
 
