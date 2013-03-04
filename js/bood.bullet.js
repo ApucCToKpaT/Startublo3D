@@ -13,7 +13,7 @@ var boodBullet = function(config){
 		color: 0xFF0000
 	}));
 
-	this._mesh.position.set(this._distance * this._ax, this._distance * this._ay, 70);
+	this._mesh.position.set(this._distance * this._ax, this._distance * this._ay, 55);
 	this._mesh.rotation.y = -this._angle;
 	bood.scene.add(this._mesh);
 
@@ -52,7 +52,8 @@ boodBullet.prototype = {
 		switch(this._animationName){
 			case 'fly':
 				this._distance += delta * this._speed;
-				this._mesh.position.set(this._distance * this._ax, this._distance * this._ay, 70);
+				this._mesh.position.x = this._distance * this._ax;
+				this._mesh.position.y = this._distance * this._ay;
 				// check killers
 				if(bood._wave != undefined && bood._wave.items != undefined){
 					for (var i = 0, l = bood._wave.items.length; i < l; i++){

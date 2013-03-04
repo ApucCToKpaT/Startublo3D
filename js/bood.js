@@ -1,6 +1,6 @@
 var bood = {
 	Version: '0.0.1.1',
-	
+
 	MaxWidth: 1024,
 	MaxHeight: 576,
 	AspectRation: [16, 9],
@@ -9,7 +9,8 @@ var bood = {
 
 	_frags: 0,
 	_boss: 1,
-
+	_bullets: [],
+	
 	init: function() {
 		this.createScene();
 		this.addPlayer();
@@ -18,63 +19,59 @@ var bood = {
 			count: this._resourcesCounter,
 			type: 'monster'
 		});
-		var timer = setInterval(function(){
+		var timer = setInterval(function() {
 			var c = 0;
-			if(bood._wave != undefined && bood._wave.items != undefined){
-				for (var i = 0, l = bood._wave.items.length; i < l; i++){
-					if(bood._wave.items[i]._loaded){
+			if(bood._wave != undefined && bood._wave.items != undefined) {
+				for(var i = 0, l = bood._wave.items.length; i < l; i++) {
+					if(bood._wave.items[i]._loaded) {
 						c++;
 					}
 				}
 			}
 
-			if(c == bood._resourcesCounter){
+			if(c == bood._resourcesCounter) {
 				//console.log('start!');
 				clearInterval(timer);
 				document.getElementById('loadingTitle').style.display = 'none';
 				document.getElementById('startBtn').style.display = 'block';
+				bood._sonar = document.getElementById('radarSonar');
 				bood.bindMouse();
 				bood.bindKeyboard();
 			}
 		}, 100);
 	},
 
-	bindMouse: function(){
-		window.onmousemove = function(e){
+	bindMouse: function() {
+		window.onmousemove = function(e) {
 			//console.log(e.clientX, e.clientY);
-			var x = e.clientX, y = e.clientY, ax = Math.PI * 2, ay = Math.PI / 2;
+			var x = e.clientX,
+				y = e.clientY,
+				ax = Math.PI * 2,
+				ay = Math.PI / 2;
 			x -= Math.round(window.innerWidth / 2) - Math.round(bood._w / 2);
 			bood._aX = ax / 2 / 1024 * x + ax / 4;
-			if (x < 0){
+			if(x < 0) {
 				bood._aX = ax / 4;
 			}
-			if (x > bood._w){
-				bood._aX = - ax / 4;
+			if(x > bood._w) {
+				bood._aX = -ax / 4;
 			}
-			if(bood._player._mesh !== undefined)
-				bood._player._mesh.rotation.y = - bood._aX + Math.PI;
+			if(bood._player._mesh !== undefined) bood._player._mesh.rotation.y = -bood._aX + Math.PI;
 
 			y -= Math.round(window.innerHeight / 2) - Math.round(bood._h / 2);
 			bood._aY = ay / 4 / 576 * y - ay / 6;
 
-			if (y < 0){
-				bood._aY = - ay / 6;
+			if(y < 0) {
+				bood._aY = -ay / 6;
 			}
-			if (y > bood._h){
+			if(y > bood._h) {
 				bood._aY = ay / 12;
 			}
 		};
-		document.onclick = function(event){
-			if(!bood._pause){
-				bood._player.setAnimation('fire');
-				if(bood._bullets == undefined){
-					bood._bullets = [];
-				}
-				bood._bullets.push(new boodBullet());
-			}
-			//event.preventDefault();
+		document.onmouseup = function() {
+			bood._player.fire();
 		};
-		document.getElementById('startBtn').onclick = function(event){
+		document.getElementById('startBtn').onclick = function(event) {
 			event.preventDefault();
 			document.getElementById('bg').style.display = 'none';
 			document.getElementById('startBtn').style.display = 'none';
@@ -82,19 +79,19 @@ var bood = {
 			bood._pause = false;
 			bood.animate();
 		};
-		document.getElementById('continueBtn').onclick = function(event){
+		document.getElementById('continueBtn').onclick = function(event) {
 			event.preventDefault();
 			bood.pause();
 		};
-		document.getElementById('restartBtn').onclick = function(event){
+		document.getElementById('restartBtn').onclick = function(event) {
 			event.preventDefault();
 			bood._player._health = 100;
 			bood._frags = 0;
 			document.getElementById('health').innerHTML = bood._player._health;
 			document.getElementById('frags').innerHTML = bood._frags;
 
-			if(bood._wave != undefined && bood._wave.items != undefined){
-				for (var i = 0, l = bood._wave.items.length; i < l; i++){
+			if(bood._wave != undefined && bood._wave.items != undefined) {
+				for(var i = 0, l = bood._wave.items.length; i < l; i++) {
 					bood._wave.items[i].reset();
 				}
 			}
@@ -104,31 +101,52 @@ var bood = {
 		};
 	},
 
-	bindKeyboard: function(){
+	bindKeyboard: function() {
 		this._keyDownList = [];
-		window.onkeydown = function(e){
+		window.onkeydown = function(e) {
 			//console.log('key press', e.keyCode);
 			bood._keyDownList[e.keyCode] = true;
-			if(e.keyCode == 80 || e.keyCode == 27){
-				bood.pause();
-			}
-			if(e.keyCode == 70){
+			switch(e.keyCode) {
+			case 70:
 				bood.fullScreen();
+				break;
+			case 80:
+			case 27:
+				bood.pause();
+				break;
+			case 37:
+				// left
+				break;
+			case 39:
+				// right
+				break;
+			case 38:
+				// up
+				break;
+			case 40:
+				// down
+				break;
+			case 32:
+				// space
+				break;
 			}
 		};
-		window.onkeyup = function(e){
+		window.onkeyup = function(e) {
 			bood._keyDownList[e.keyCode] = false;
+			if(e.keyCode == 32){
+				bood._player.fire();
+			}
 		};
 	},
 
-	fullScreen: function(){
+	fullScreen: function() {
 		this._fullScreen = !this._fullScreen;
 		this.updateSceneSize();
 	},
 
-	pause: function(){
+	pause: function() {
 		this._pause = !this._pause;
-		if(!this._pause){
+		if(!this._pause) {
 			document.getElementById('bg').style.display = 'none';
 			document.getElementById('continueBtn').style.display = 'none';
 			this._clock.start();
@@ -139,19 +157,19 @@ var bood = {
 		}
 	},
 
-	gameOver: function(){
+	gameOver: function() {
 		this._pause = true;
-		setTimeout(function(){
+		setTimeout(function() {
 			document.getElementById('blood').style.opacity = 0.8;
 		}, 150);
-		setTimeout(function(){
+		setTimeout(function() {
 			document.getElementById('gameover').style.display = 'block';
 			document.getElementById('blood').style.opacity = 0;
 		}, 2000);
 	},
 
 	animate: function() {
-		if(!bood._pause){
+		if(!bood._pause) {
 			requestAnimationFrame(bood.animate);
 		} else {
 			bood._clock.stop();
@@ -161,24 +179,23 @@ var bood = {
 		// player
 		bood._player.process(delta);
 		// killers
-		if(bood._wave != undefined && bood._wave.items != undefined){
-			for (var i = 0, l = bood._wave.items.length; i < l; i++){
+		if(bood._wave != undefined && bood._wave.items != undefined) {
+			for(var i = 0, l = bood._wave.items.length; i < l; i++) {
 				bood._wave.items[i].process(delta);
 			}
 		}
 		// bullets
-		if(bood._bullets != undefined){
-			for (var i = 0, l = bood._bullets.length; i < l; i++){
-				if(bood._bullets[i] != undefined)
-					bood._bullets[i].process(delta);
+		if(bood._bullets != undefined) {
+			for(var i = 0, l = bood._bullets.length; i < l; i++) {
+				if(bood._bullets[i] != undefined) bood._bullets[i].process(delta);
 			}
 		}
 		// snow
 		var time = Date.now() * 0.00005;
-		for ( i = 0; i < bood.scene.children.length; i ++ ) {
-			var object = bood.scene.children[ i ];
-			if ( object instanceof THREE.ParticleSystem ) {
-				object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+		for(i = 0; i < bood.scene.children.length; i++) {
+			var object = bood.scene.children[i];
+			if(object instanceof THREE.ParticleSystem) {
+				object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1));
 			}
 		}
 		// update camera
@@ -194,14 +211,14 @@ var bood = {
 		});
 	},
 
-	createWave: function(config){
+	createWave: function(config) {
 		var p = config || {};
 		this._wave = {
 			count: p.count || 1,
 			type: p.type || 'monster',
 			items: []
 		};
-		for (var i = 0, l = this._wave.count; i < l; i++){
+		for(var i = 0, l = this._wave.count; i < l; i++) {
 			this._wave.items.push(new boodKiller({
 				type: this._wave.type,
 				index: i
@@ -213,10 +230,10 @@ var bood = {
 		// create renderer
 		this._wrap = document.getElementById('wrap');
 		this.renderer = new THREE.WebGLRenderer({
-			antialias: true
-			,autoClear: true
-			,clearColor: 0xefefef
-			,clearAlpha: 1
+			antialias: true,
+			autoClear: true,
+			clearColor: 0xefefef,
+			clearAlpha: 1
 			//,preserveDrawingBuffer: true
 		});
 		this._wrap.appendChild(this.renderer.domElement);
@@ -239,21 +256,21 @@ var bood = {
 
 		// scene
 		this.scene = new THREE.Scene();
-		this.scene.fog = new THREE.FogExp2( 0xefefef, 0.0008, 3000);
-		//this.scene.fog = new THREE.Fog( 0xefd1b5, 500, 3000 );
-
+		this.scene.fog = new THREE.FogExp2(0xefefef, 0.0008, 3000);
 		// light
 		this.light = new THREE.HemisphereLight(0xFFFFFF, 0x000000, 1.8);
 		this.light.up = new THREE.Vector3(0, 0, 1);
 		this.light.position.set(-500, -500, 3000);
 		this.scene.add(this.light);
-		
+
 		// ambient
 		this.scene.add(new THREE.AmbientLight(0x000000));
 
 		// create reflectionCube
-		var path = '/m/cube/', format = '.jpg', urls = [path + 'px' + format, path + 'nx' + format, path + 'py' + format, path + 'ny' + format, path + 'pz' + format, path + 'nz' + format];
-		this.reflectionCube = THREE.ImageUtils.loadTextureCube( urls );
+		var path = '/m/cube/',
+			format = '.jpg',
+			urls = [path + 'px' + format, path + 'nx' + format, path + 'py' + format, path + 'ny' + format, path + 'pz' + format, path + 'nz' + format];
+		this.reflectionCube = THREE.ImageUtils.loadTextureCube(urls);
 		this.reflectionCube.format = THREE.RGBFormat;
 
 		// floor
@@ -267,22 +284,11 @@ var bood = {
 		obj.receiveShadow = true;
 		this.scene.add(obj);
 
-		//obj = new THREE.AxisHelper(100);
-		//obj.position.set(0, 0, 10);
-		//this.scene.add(obj);
-		/*
-		obj = new THREE.Mesh(new THREE.CylinderGeometry( 5, 20, 190, 8, 8 ), new THREE.MeshPhongMaterial({
-			color: 0xfd2e56
-		}));
-		obj.position.set(0,300,80);
-		obj.rotation.x = Math.PI / 2;
-		bood.scene.add(obj);
-		*/
 		this.renderer.gammaInput = true;
 		this.renderer.gammaOutput = true;
 		this.renderer.physicallyBasedShading = true;
 
-		bood.utils.getModel('data/trees/tree.js', 'data/trees', function(d){
+		bood.utils.getModel('data/trees/tree.js', 'data/trees', function(d) {
 			d.scale.set(150, 150, 150);
 			d.position.set(300, -800, 0);
 			d.rotation.x = Math.PI / 2;
@@ -290,8 +296,17 @@ var bood = {
 			d.matrixAutoUpdate = false;
 			d.updateMatrix();
 			bood.scene.add(d);
-			for (var i = 0, l = 30; i < l; i++){
-				var obj = d.clone(), a = Math.random() * Math.PI * 2, s = Math.random() * 100 + 50, sX = Math.sin(a), cX = Math.cos(a), sY = Math.sin(0), cY = Math.cos(0), ax = sX * cY, ay = cX * cY, dist = Math.round(Math.random() * 1000 + 500);
+			for(var i = 0, l = 30; i < l; i++) {
+				var obj = d.clone(),
+					a = Math.random() * Math.PI * 2,
+					s = Math.random() * 100 + 50,
+					sX = Math.sin(a),
+					cX = Math.cos(a),
+					sY = Math.sin(0),
+					cY = Math.cos(0),
+					ax = sX * cY,
+					ay = cX * cY,
+					dist = Math.round(Math.random() * 1000 + 500);
 				obj.position.set(dist * ax, dist * ay, 0);
 				obj.rotation.y = Math.random() * Math.PI * 3;
 				obj.scale.set(s, s, s);
@@ -313,32 +328,46 @@ var bood = {
 		});
 	},
 
-	addSnow: function(){
+	addSnow: function() {
 		this._snowGeometry = new THREE.Geometry();
-		for (var vertex, i = 0; i < 20000; i ++ ) {
+		for(var vertex, i = 0; i < 20000; i++) {
 			vertex = new THREE.Vector3();
 			vertex.x = Math.random() * 2000 - 1000;
 			vertex.y = Math.random() * 2000 - 1000;
 			vertex.z = Math.random() * 2000 - 1000;
 			this._snowGeometry.vertices.push(vertex);
 		}
-		var materials = [], particles, size, color, parameters = [ [ [1.0, 1.0, 1.0], 1 ], [ [1, 1, 1], 1 ], [ [1, 1, 1], 1 ], [ [1, 1, 1], 2 ], [ [1, 1, 1], 1 ] ];
+		var materials = [],
+			particles, size, color, parameters = [
+				[
+					[1.0, 1.0, 1.0], 1],
+				[
+					[1, 1, 1], 1],
+				[
+					[1, 1, 1], 1],
+				[
+					[1, 1, 1], 2],
+				[
+					[1, 1, 1], 1]
+			];
 
-		for ( i = 0; i < parameters.length; i ++ ) {
+		for(i = 0; i < parameters.length; i++) {
 
-			size  = parameters[i][1];
+			size = parameters[i][1];
 			color = parameters[i][0];
 
-			materials[i] = new THREE.ParticleBasicMaterial( { size: size } );
-			materials[i].color.setHSV( color[0], color[1], color[2] );
+			materials[i] = new THREE.ParticleBasicMaterial({
+				size: size
+			});
+			materials[i].color.setHSV(color[0], color[1], color[2]);
 
-			particles = new THREE.ParticleSystem(this._snowGeometry, materials[i] );
+			particles = new THREE.ParticleSystem(this._snowGeometry, materials[i]);
 
 			particles.rotation.x = Math.random() * 6;
 			particles.rotation.y = Math.random() * 6;
 			particles.rotation.z = Math.random() * 6;
 
-			this.scene.add( particles );
+			this.scene.add(particles);
 
 		}
 	},
@@ -353,6 +382,9 @@ var bood = {
 			z = this.lookPosition.z + this._radius * sY;
 		if(z < 1) z = 1;
 
+		if(this._sonar)
+			this._sonar.style.WebkitTransform = 'scaleX(-1)rotate(' + Math.round((-bood._aX + Math.PI) * 180 / Math.PI) + 'deg)';
+
 		this.camera.position.set(this.lookPosition.x + this._radius * sX * cY, this.lookPosition.y + this._radius * cX * cY, z);
 
 		this.camera.lookAt(this.lookPosition);
@@ -362,7 +394,7 @@ var bood = {
 		this._wrap.style.display = 'none';
 		var h = window.innerHeight,
 			w = window.innerWidth;
-		if(!this._fullScreen){
+		if(!this._fullScreen) {
 			// aspect ratio
 			if(w / this.AspectRation[0] > h / this.AspectRation[1]) {
 				w = Math.round(h / this.AspectRation[1] * this.AspectRation[0]);
@@ -395,9 +427,9 @@ var bood = {
 		this.camera.updateProjectionMatrix();
 	},
 
-	clearBullets: function(){
-		for(var i = 0, l = this._bullets.length; i < l; i++){
-			if (this._bullets[i]._destroy !== undefined){
+	clearBullets: function() {
+		for(var i = 0, l = this._bullets.length; i < l; i++) {
+			if(this._bullets[i]._destroy !== undefined) {
 				this._bullets.splice(i, 1);
 				this.clearBullets();
 				break;
@@ -406,10 +438,11 @@ var bood = {
 	},
 
 	utils: {
-		getModel: function(url, texturePath, callback){
+		getModel: function(url, texturePath, callback) {
 			var xhr = new XMLHttpRequest();
-			xhr.onreadystatechange = ready;  
-	        function ready() {
+			xhr.onreadystatechange = ready;
+
+			function ready() {
 				if(xhr.readyState < 4) {
 					return;
 				}
